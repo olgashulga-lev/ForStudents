@@ -24,14 +24,229 @@ app.add_middleware(
 )
 
 # Модели БД
+class Person(Base):
+    __tablename__ = "person"
+    
+    user_id = Column(Integer, primary_key=True)
+    chat_id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False)
+    photo = Column(String(255), default="default.jpg")
+    experience = Column(Integer, default=0)
+    money = Column(Integer, default=100)
+    hp = Column(Integer, default=100)
+    damage = Column(Integer, default=20)
+    luck = Column(Integer, default=20)
+    level = Column(Integer, default=1)
+
+class Inventory(Base):
+    __tablename__ = "inventory"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    
+    
+    __table_args__ = (
+        UniqueConstraint('user_id', 'chat_id', 'item_id', name='uq_user_item'),
+    )
 
 # Создание таблиц
+Base.metadata.create_all(bind=engine)
 
 # Pydantic Схемы
+class PersonCreate(BaseModel):
+    user_id: int
+    chat_id: int
+    name: str
+    photo: str = "default.jpg"
+    level: int = 1
+
+class PersonUpdate(BaseModel):
+    name: Optional[str] = None
+    photo: Optional[str] = None
+    experience: Optional[int] = None
+    money: Optional[int] = None
+    hp: Optional[int] = None
+    damage: Optional[int] = None
+    luck: Optional[int] = None
+    level: Optional[int] = None
+
+class PersonResponse(BaseModel):
+    userId: int
+    chatId: int
+    name: str
+    photo: str
+    experience: int
+    money: int
+    hp: int
+    damage: int
+    luck: int
+    level: int = 1
+    
+    class Config:
+        from_attributes = True
+
+class ItemResponse(BaseModel):
+    
+    
+    class Config:
+        from_attributes = True
+
+class InventoryAddRequest(BaseModel):
+    
+
+class InventoryItemResponse(BaseModel):
+    
+    
+    class Config:
+        from_attributes = True
 
 # Вспомогательные функции
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+def get_person(db: Session, chat_id: int, user_id: int):
+    return db.query(Person).filter(
+        Person.chat_id == chat_id,
+        Person.user_id == user_id
+    ).first()
 
 # API Эндпоинты
 
 # Person
+@app.get("/api/person/id/{chat_id}", response_model=List[PersonResponse])
+def get_players_by_chat(chat_id: int, db: Session = Depends(get_db)):
+    players = db.query(Person).filter(Person.chat_id == chat_id).all()
+    return [
+        PersonResponse(
+            userId=p.user_id,
+            chatId=p.chat_id,
+            name=p.name,
+            photo=p.photo,
+            experience=p.experience,
+            money=p.money,
+            hp=p.hp,
+            damage=p.damage,
+            luck=p.luck,
+            level=p.level
+        )
+        for p in players
+    ]
 
+@app.post("/api/person/create_alt", status_code=201)
+def create_player_alt(data: dict, db: Session = Depends(get_db)):
+    try:
+        user_id = data.get('user_id')
+        chat_id = data.get('chat_id')
+        name = data.get('name')
+        photo = data.get('photo', 'default.jpg')
+        level = data.get('level', 1)
+        
+        if not all([user_id, chat_id, name]):
+            raise HTTPException(status_code=400, detail="Missing required fields")
+        
+        existing = get_person(db, chat_id, user_id)
+        if existing:
+            raise HTTPException(status_code=400, detail="Игрок уже существует")
+        
+        db_player = Person(
+            user_id=user_id,
+            chat_id=chat_id,
+            name=name,
+            photo=photo,
+            experience=0,
+            money=100,
+            hp=100,
+            damage=20,
+            luck=20,
+            level=level
+        )
+        db.add(db_player)
+        db.commit()
+        db.refresh(db_player)
+        return {"message": "Игрок создан"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.put("/api/person/update")
+def update_player(
+        chat_id: int,
+        user_id: int,
+        data: PersonUpdate,
+        db: Session = Depends(get_db)
+):
+    player = get_person(db, chat_id, user_id)
+    if not player:
+        raise HTTPException(status_code=404, detail="Игрок не найден")
+
+    for key, value in data.dict(exclude_unset=True).items():
+        setattr(player, key, value)
+
+    db.commit()
+    return {"message": "Игрок обновлён"}
+
+@app.get("/api/person/all", response_model=List[PersonResponse])
+def get_all_players(db: Session = Depends(get_db)):
+    players = db.query(Person).all()
+    return [
+        PersonResponse(
+            userId=p.user_id,
+            chatId=p.chat_id,
+            name=p.name,
+            photo=p.photo,
+            experience=p.experience,
+            money=p.money,
+            hp=p.hp,
+            damage=p.damage,
+            luck=p.luck,
+            level=p.level
+        )
+        for p in players
+    ]
+
+# Items (для магазина)
+@app.get("/api/item/all", response_model=List[ItemResponse])
+def get_items(db: Session = Depends(get_db)):
+    return [
+        ItemResponse(id=1, name="Зелье здоровья", price=50, description="Восстанавливает 20 HP", type="shop"),
+        
+    ]
+
+@app.get("/api/inventory/{chat_id}/{user_id}", response_model=List[InventoryItemResponse])
+def get_inventory(chat_id: int, user_id: int, db: Session = Depends(get_db)):
+    items = db.query(Inventory).filter(
+        
+    ).all()
+    
+    return [
+        InventoryItemResponse(
+            id=inv.id,
+            
+        )
+        for inv in items
+    ]
+
+@app.post("/api/inventory/add")
+def add_to_inventory(request: InventoryAddRequest, db: Session = Depends(get_db)):
+    existing = db.query(Inventory).filter(
+        Inventory.user_id == request.user_id,
+        
+    ).first()
+    
+    if existing:
+        existing.quantity += request.quantity
+    else:
+        new_item = Inventory(
+            user_id=request.user_id,
+            
+        )
+        db.add(new_item)
+    
+    db.commit()
+    return {"message": " "}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0
