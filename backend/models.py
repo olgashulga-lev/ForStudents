@@ -223,40 +223,35 @@ async def perform_duel(player1, player2, challenger_id, target_id, callback):
             text += f"{player1.name} нанёс {base_damage1} урона → {player2_hp} HP\n"
             #написать для 2 игрока
         else:
-            player1_hp -= base_damage2
-            if player1_hp <= 0:
-                player1_hp = 0
-                text += f"{player2.name} нанёс {base_damage2} урона → {player1_hp} HP\n"
-                text += f"{player1.name} повержен!\n"
+            player1_hp -= #урон 2 игрока
+            if # здоровье 1 игрока меньше или равно 0
+                #здоровье 1 игрока 0
+                text += f"{} нанёс {} урона → {} HP\n"
+                text += f"{} повержен!\n"
                 break
             
-            player2_hp -= base_damage1
-            if player2_hp <= 0:
-                player2_hp = 0
-                text += f"{player2.name} нанёс {base_damage2} урона → {player1_hp} HP\n"
-                text += f"{player1.name} нанёс {base_damage1} урона → {player2_hp} HP\n"
-                text += f"{player2.name} повержен!\n"
-                break
+            player2_hp -= # урон 1 игрока
+            #написать про здоровье 2 игрока
             
-            text += f"{player2.name} нанёс {base_damage2} урона → {player1_hp} HP\n"
-            text += f"{player1.name} нанёс {base_damage1} урона → {player2_hp} HP\n"
+            text += f"{} нанёс {} урона → {} HP\n"
+            text += f"{} нанёс {} урона → {} HP\n"
         
         text += "\n"
         round_num += 1
     
     text += "═" * 30 + "\n\n"
     
-    exp_for_winner = random.randint(15, 40)
-    exp_for_loser = random.randint(5, 15)
+    exp_for_winner = random.randint(?)#опыт для победителя
+    exp_for_loser = random.randint(?)#опыт для проигравшего
     
-    if player1_hp > player2_hp:
-        win_money = random.randint(20, 100)
-        player1.money += win_money
+    if # здоровье 1 больше 2
+        win_money = random.randint(?)
+        player1.money += ?
         player1.hp = player1_hp
-        player2.hp = player2_hp
+        #написать про здоровье 2
         
-        leveled1 = player1.add_exp(exp_for_winner)
-        leveled2 = player2.add_exp(exp_for_loser)
+        leveled1 = player1.add_exp(exp_for_winner)#добавляет опыт и проверяет повышение уровня
+        leveled2 ???
         
         api.update_player(player1)
         api.update_player(player2)
