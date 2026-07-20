@@ -299,28 +299,25 @@ async def perform_duel(player1, player2, challenger_id, target_id, callback):
             text += f"\n{} мёртв!"
     
     else:
-        player1.hp = player1_hp
-        player2.hp = player2_hp
+        #сохранение здоровья
         
-        exp_draw = random.randint(10, 20)
+        exp_draw = random.randint()
         leveled1 = player1.add_exp(exp_draw)
-        leveled2 = player2.add_exp(exp_draw)
+        #про 2
         
-        api.update_player(player1)
-        api.update_player(player2)
+        #сохранение в базу
         
         text += f"<b>НИЧЬЯ!</b>\n"
-        text += f"У обоих осталось {player1_hp} HP\n"
-        text += f"Оба получают +{exp_draw} опыта!"
+        text += f"У обоих осталось {} HP\n"
+        text += f"Оба получают +{} опыта!"
         if leveled1:
-            text += f"{player1.name} ПОВЫСИЛ УРОВЕНЬ ДО {player1.level}!"
+            text += f"{} ПОВЫСИЛ УРОВЕНЬ ДО {}!"
         if leveled2:
-            text += f"{player2.name} ПОВЫСИЛ УРОВЕНЬ ДО {player2.level}!"
+            text += f"{} ПОВЫСИЛ УРОВЕНЬ ДО {}!"
     
     if player1_hp < 0:
         player1_hp = 0
-    if player2_hp < 0:
-        player2_hp = 0
+    # про 
     
     player1.hp = min(100, player1_hp)
     player2.hp = min(100, player2_hp)
@@ -332,14 +329,14 @@ async def perform_duel(player1, player2, challenger_id, target_id, callback):
 @router.message(Command("fight"))
 async def cmd_duel(message: types.Message):
     player = get_player_or_none(message)
-    if not player:
-        await message.answer("Сначала зарегистрируйтесь: /registration")
+    if #нет игрока
+        await message.answer("   /registration")
         return
     
     all_players = api.get_all_players()
     available_players = []
-    for p in all_players:
-        if p.user_id == message.from_user.id:
+    for #игрок из списка
+        if ?.user_id == message.from_user.id:#ID пользователя, который написал команду /fight
             continue
         
         in_duel = False
