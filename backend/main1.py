@@ -206,6 +206,78 @@ def get_all_players(db: Session = Depends(get_db)):
         for p in players
     ]
 
+#День 3
+@app.put("/api/person/update_level") #обновление уровня игрока
+def update_player_level(
+    #id чата и польз., уровень(пишем тип)
+    db: Session = Depends(get_db)
+):
+    player =  ??? # Вызываем вспомогательную функцию для поиска игрока
+    if not player:
+        raise HTTPException(status_code=404, detail="Игрок не найден")
+    
+    player.level = level
+    db.commit()
+    return {"message": "???", "level":??? }
+
+@app.get("/api/person/level/{chat_id}/{user_id}") #получение уровня игрока
+def get_player_level(
+    # id чата и польз.(пишем тип)
+    db: Session = Depends(get_db)
+):
+    player = ??? # Вызываем вспомогательную функцию для поиска игрока
+    if not player:
+        raise HTTPException(status_code=404, detail="Игрок не найден")
+    
+    return {"level": ???, "experience": ???}
+
+#Инвентарь
+@app.put("/api/inventory/update") #обновление количества предмета
+def update_inventory_quantity(data: dict, db: Session = Depends(get_db)): #Здесь используется data: dict, а не Pydantic-схема.
+    ? id инвенторя,колв. Предметов обращаемся через метод get у словарь data (data.get)    
+    item = db.query(Inventory).filter(? id инвентаря).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Предмет не найден")
+    
+    item.quantity = quantity
+    db.commit()
+    return {"message": "???"}
+
+#Зелья
+@app.get("/api/effects/{chat_id}/{user_id}", response_model=List[EffectResponse])# получение активных эффектов
+def get_active_effects(? Id чатаи польз.(тип), db: Session = Depends(get_db)):
+    effects = db.query(ActiveEffectDB).filter(
+        #фильтер по id  и польз.
+    ).all()
+    
+    now = datetime.utcnow() #текущее время
+    result = [] # пустой список
+    for e in effects:  #Цикл по всем эффектам игрока.
+        elapsed = (???).total_seconds() #сколько секунд прошло
+        remaining = max(0, e.duration_seconds - elapsed) #Рассчитываем оставшееся время
+        if remaining > 0:
+            result.append(EffectResponse(  #Добавление эффекта в результат
+                #тип и величина эффекта вызывается у определенного эффекта
+                remaining_seconds=int(? оставшееся время)
+            ))
+    
+    return result
+
+@app.post("/api/effects/apply") #применение эффекта
+def apply_effect(
+    # ID чата, польз., тип эффекта, величина эффекта, длительность в секундах(тип обозначаем)
+
+    db: Session = Depends(get_db)
+):
+    effect = ActiveEffectDB(
+        #Создаем новый объект ActiveEffectDB с переданными параметрами.
+    )
+    db.add(effect)
+    db.commit()
+    return {"message": "???"}
+
+#
+
 # Items (для магазина)
 @app.get("/api/item/all", response_model=List[ItemResponse])
 def get_items(db: Session = Depends(get_db)):
