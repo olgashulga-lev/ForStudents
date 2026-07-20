@@ -198,21 +198,19 @@ async def perform_duel(player1, player2, challenger_id, target_id, callback):
     max_rounds = 3
     round_num = 1
     
-    while round_num <= max_rounds and player1_hp > 0 and player2_hp > 0:
+    while # пока раунд не макс. и здоровье обоих игроков больше 0
         text += f"<b>РАУНД {round_num}</b>\n"
-        initiative1 = random.randint(1, 20) + player1_luck * 10
-        initiative2 = random.randint(1, 20) + player2_luck * 10
-        base_damage1 = random.randint(5, 15) + player1_damage // 3
-        base_damage2 = random.randint(5, 15) + player2_damage // 3
-        if random.random() < player1_luck:
-            base_damage1 = int(base_damage1 * 1.5)
+        initiative1 = random.randint(1, 20) + player1_luck * 10#инициатива игрока
+        #написать для 2
+        base_damage1 = random.randint(5, 15) + player1_damage // 3#базовый урон игрока 
+        #написать для 2
+        if random.random() < #удача 1 игрока
+            base_damage1 = int(base_damage1 * 1.5)#Увеличь урон на 50% и округли вниз до целого числа
             text += f"{player1.name} повезло! Критический удар!\n"
         
-        if random.random() < player2_luck:
-            base_damage2 = int(base_damage2 * 1.5)
-            text += f"{player2.name} повезло! Критический удар!\n"
+        #написать для 2
         
-        if initiative1 >= initiative2:
+        if #инициатива 1 игрока больше 2
             player2_hp -= base_damage1
             if player2_hp <= 0:
                 player2_hp = 0
@@ -220,16 +218,10 @@ async def perform_duel(player1, player2, challenger_id, target_id, callback):
                 text += f"{player2.name} повержен!\n"
                 break
             
-            player1_hp -= base_damage2
-            if player1_hp <= 0:
-                player1_hp = 0
-                text += f"{player1.name} нанёс {base_damage1} урона → {player2_hp} HP\n"
-                text += f"{player2.name} нанёс {base_damage2} урона → {player1_hp} HP\n"
-                text += f"{player1.name} повержен!\n"
-                break
+            #написать про здоровье 1 игрока
             
             text += f"{player1.name} нанёс {base_damage1} урона → {player2_hp} HP\n"
-            text += f"{player2.name} нанёс {base_damage2} урона → {player1_hp} HP\n"
+            #написать для 2 игрока
         else:
             player1_hp -= base_damage2
             if player1_hp <= 0:
