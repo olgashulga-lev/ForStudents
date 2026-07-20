@@ -253,50 +253,50 @@ async def perform_duel(player1, player2, challenger_id, target_id, callback):
         leveled1 = player1.add_exp(exp_for_winner)#добавляет опыт и проверяет повышение уровня
         leveled2 ???
         
-        api.update_player(player1)
-        api.update_player(player2)
+        api.update_player(player1)#отправляет запрос на обновление игрока 1 в базе данных
+        #для 2
         
-        text += f"<b>{player1.name} ПОБЕДИЛ!</b>\n"
-        text += f"+{win_money} монет!\n"
-        text += f"+{exp_for_winner} опыта"
+        text += f"<b>{} ПОБЕДИЛ!</b>\n"
+        text += f"+{} монет!\n"
+        text += f"+{} опыта"
         if leveled1:
-            text += f"{player1.name} ПОВЫСИЛ УРОВЕНЬ ДО {player1.level}!"
-        text += f"\nОсталось HP: {player1_hp}\n"
+            text += f"{} ПОВЫСИЛ УРОВЕНЬ ДО {}!"
+        text += f"\nОсталось HP: {}\n"
         
-        text += f"\n{player2.name} проиграл\n"
-        text += f"+{exp_for_loser} опыта (за участие)"
+        text += f"\n{} проиграл\n"
+        text += f"+{} опыта (за участие)"
         if leveled2:
-            text += f"{player2.name} ПОВЫСИЛ УРОВЕНЬ ДО {player2.level}!"
+            text += f"{} ПОВЫСИЛ УРОВЕНЬ ДО {}!"
         
         if player2_hp <= 0:
-            text += f"\n{player2.name} мёртв!"
+            text += f"\n{} мёртв!"
     
     elif player2_hp > player1_hp:
-        win_money = random.randint(20, 100)
-        player2.money += win_money
-        player1.hp = player1_hp
-        player2.hp = player2_hp
+        win_money = random.randint()
+        player2.money += 
+        player1.hp = 
+        player2.hp = 
         
         leveled1 = player1.add_exp(exp_for_loser)
-        leveled2 = player2.add_exp(exp_for_winner)
+        leveled2 =
         
         api.update_player(player1)
-        api.update_player(player2)
+        #для 2
         
-        text += f"<b>{player2.name} ПОБЕДИЛ!</b>\n"
-        text += f"+{win_money} монет!\n"
-        text += f"+{exp_for_winner} опыта"
+        text += f"<b>{} ПОБЕДИЛ!</b>\n"
+        text += f"+{} монет!\n"
+        text += f"+{} опыта"
         if leveled2:
-            text += f"{player2.name} ПОВЫСИЛ УРОВЕНЬ ДО {player2.level}!"
-        text += f"\nОсталось HP: {player2_hp}\n"
+            text += f"{} ПОВЫСИЛ УРОВЕНЬ ДО {}!"
+        text += f"\nОсталось HP: {}\n"
         
-        text += f"\n{player1.name} проиграл\n"
-        text += f"+{exp_for_loser} опыта"
+        text += f"\n{} проиграл\n"
+        text += f"+{} опыта"
         if leveled1:
-            text += f"{player1.name} ПОВЫСИЛ УРОВЕНЬ ДО {player1.level}!"
+            text += f"{} ПОВЫСИЛ УРОВЕНЬ ДО {}!"
         
         if player1_hp <= 0:
-            text += f"\n{player1.name} мёртв!"
+            text += f"\n{} мёртв!"
     
     else:
         player1.hp = player1_hp
