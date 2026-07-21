@@ -103,6 +103,16 @@ async def cmd_join_by_name(message: types.Message):
     )
 
 async def start_raid(message: types.Message, boss_id: int):
+    boss_image = BOSS_IMAGES.get(boss_id)
+    if boss_image and os.path.exists(boss_image):
+        try:
+            photo = FSInputFile(boss_image)
+            await message.answer_photo(
+                photo=photo,
+                caption=f"<b>{boss.name}</b>\nHP: {boss.hp}\nУрон: {boss.damage}"
+            )
+        except Exception as e:
+            print(f"Ошибка при отправке фото босса: {e}")
     
 
     keyboard = InlineKeyboardMarkup(
