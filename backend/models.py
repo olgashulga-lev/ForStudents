@@ -486,33 +486,33 @@ async def cmd_duel_select(callback: types.CallbackQuery):
 
 
 @router.callback_query(F.data.startswith("refuse_duel_"))
-async def cmd_duel_refuse(callback: types.CallbackQuery):
+async def cmd_duel_refuse(callback: types.CallbackQuery):#команда отказа от дуэли
     data = callback.data.split('_')
-    if len(data) < 4:
-        await callback.answer("Ошибка!")
+    if len(data) < ???
+        await callback.answer("??")
         return
     
     try:
-        challenger_id = int(data[2])
-        target_id = int(data[3])
+        challenger_id = int(??
+        target_id = ??
     except ValueError:
-        await callback.answer("Ошибка!")
+        await ???
         return
     
-    if callback.from_user.id != target_id:
-        await callback.answer("Это не ваш вызов!")
+    if callback.from_user.id ??? target_id:
+        await ???
         return
     
-    if callback.message.chat.id in active_duels:
-        for duel in active_duels[callback.message.chat.id][:]:
-            if duel['player1'] == challenger_id and duel['player2'] == target_id:
-                active_duels[callback.message.chat.id].remove(duel)
+    if callback.message.chat.id in active_duels:#Если в этом чате есть активные дуэли
+        for duel in active_duels[callback.message.chat.id][:]:#Копия списка дуэлей в чате
+            if duel['player1'] == challenger_id ???:
+                active_duels[callback.message.chat.id].remove(duel)#Удаляем эту дуэль из списка активных
                 break
     
     await callback.message.edit_text(
-        f"{callback.from_user.first_name} отказался от дуэли!"
+        f"{callback.from_user.first_name} ???"
     )
-    await callback.answer("Вы отказались от дуэли")
+    await callback.answer("???")
 
 
 @router.callback_query(F.data == "duel_cancel")
@@ -615,21 +615,21 @@ async def cmd_duel_accept(callback: types.CallbackQuery):
 
 
 @router.message(Command("fight_cancel"))
-async def cmd_duel_cancel_all(message: types.Message):
-    if message.chat.id not in active_duels:
-        await message.answer("Нет активных дуэлей!")
+async def cmd_duel_cancel_all(message: types.Message):#команда отмены всех дуэлей
+    if message.chat.id not ???
+        await ???
         return
     
     removed = False
     for duel in active_duels[message.chat.id][:]:
-        if duel['player1'] == message.from_user.id or duel['player2'] == message.from_user.id:
-            active_duels[message.chat.id].remove(duel)
+        if duel['player1'] == message.from_user.id ????:
+            active_duels[message.chat.id].remove(???)
             removed = True
     
     if removed:
-        await message.answer("Вы отменили свою дуэль.")
+        await ???
     else:
-        await message.answer("Вы не участвуете в дуэли.")
+        await ???
 
 
 #День 4
