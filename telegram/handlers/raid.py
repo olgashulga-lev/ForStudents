@@ -24,10 +24,6 @@ async def perform_raid_battle(raid, boss, callback=None):
 
 @router.message(Command("raid"))
 async def cmd_raid(message: types.Message):
-
-
-@router.message(Command("join"))
-async def cmd_join_by_name(message: types.Message):
             text += f"Создатель: {creator_name}\n"
             text += f"{status}\n"
             text += f"HP: {raid.get('boss_current_hp', boss.hp)}\n"
@@ -40,7 +36,71 @@ async def cmd_join_by_name(message: types.Message):
                 text += f"Рейд уже начался!\n"
             
             text += "\n"
+
+@router.message(Command("join"))
+async def cmd_join_by_name(message: types.Message):
+            
+    creator_name = ' '.join(args[1:]).strip()
+        
+        for raid_id, raid in active_raids.items():
+        if raid['status'] != 'recruiting':
+            continue
+            
+        creator = None
+        all_players = api.get_all_players()
+        for p in all_players:
+            if p.user_id == raid['creator_id']:
+                creator = p
+                break
+        
+        if creator and creator.name.lower() == creator_name.lower():
+            found_raid = raid
+            found_raid_id = raid_id
+            break
     
+    if not found_raid:
+        await message.answer(
+            f"Рейд с создателем '{creator_name}' не найден!\n"
+            f"Используйте /raid для списка активных рейдов."
+        )
+        return
+    
+    for other_raid in active_raids.values():
+        if message.from_user.id in other_raid['players']:
+            await message.answer("Вы уже участвуете в другом рейде!")
+            return
+    
+    if len(found_raid['players']) >= found_raid.get('max_players', 5):
+        await message.answer("Рейд полон! (максимум 5 игроков)")
+        return
+    
+    found_raid['players'].append(message.from_user.id)
+    
+    creator = None
+    all_players = api.get_all_players()
+    for p in all_players:
+        if p.user_id == found_raid['creator_id']:
+            creator = p
+            break
+    
+    if creator:
+        try:
+            await message.bot.send_message(
+                chat_id=creator.chat_id,
+                text=f"Игрок {player.name} присоединился к вашему рейду!\n"
+                     f"Теперь участников: {len(found_raid['players'])}\n\n"
+                     f"Когда наберётся 2+ игроков, нажмите «Начать бой»"
+            )
+        except:
+            pass
+    
+    await message.answer(
+        f"Вы присоединились к рейду {creator_name}!\n"
+        f"Участников: {len(found_raid['players'])}\n\n"
+        f"Команды:\n"
+        f"/raid_status - статус рейда\n"
+        f"/leave_raid - выйти из рейда"
+    )
 
 async def start_raid(message: types.Message, boss_id: int):
     
