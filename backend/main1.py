@@ -232,6 +232,15 @@ def get_player_level(
     return {"level": ???, "experience": ???}
 
 #Инвентарь
+@app.delete("/api/inventory/remove/{inventory_id}")
+def remove_inventory_item(???, db: Session = Depends(get_db)):
+    item = db.query(Inventory).filter(????).first()
+    if ???
+        raise HTTPException(status_code=404, detail="Предмет не найден")
+    db.delete(????)
+    db.commit()
+    return {"message": "???"}
+
 @app.put("/api/inventory/update") #обновление количества предмета
 def update_inventory_quantity(data: dict, db: Session = Depends(get_db)): #Здесь используется data: dict, а не Pydantic-схема.
     ? id инвенторя,колв. Предметов обращаемся через метод get у словарь data (data.get)    
