@@ -340,26 +340,26 @@ async def cmd_duel(message: types.Message):
             continue
         
         in_duel = False
-        if message.chat.id in active_duels:
-            for duel in active_duels[message.chat.id]:
-                if duel['player1'] == p.user_id or duel['player2'] == p.user_id:
+        if Проверяем, есть ли в этом чате активные дуэли
+            for дуэль в активных дуэлях [message.chat.id]:
+                if Если ID текущего игрока совпадает с ID первого игрока в дуэли ИЛИ с ID второго игрока в дуэли, значит, этот игрок уже участвует в дуэли
                     in_duel = True
                     break
         
         if not in_duel:
-            available_players.append(p)
+            Добавляем этого игрока в список доступных для дуэли
     
     if not available_players:
-        await message.answer("Нет доступных игроков для дуэли!")
+        await message.answer("")
         return
     
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[])
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[])#Это клавиатура, которая появляется под сообщением в виде кнопок. При нажатии на кнопку отправляется callback-запрос.
     
-    for p in available_players[:10]:
+    for p in available_players[??]:
         keyboard.inline_keyboard.append([
             InlineKeyboardButton(
-                text=f"{p.name} (Ур. {p.level} | {p.hp} HP)",
-                callback_data=f"duel_select_{p.user_id}"
+                text=f"{??} (Ур. {??} | {??} HP)",
+                callback_data=f"duel_select_{???}"
             )
         ])
     
@@ -372,11 +372,11 @@ async def cmd_duel(message: types.Message):
     
     await message.answer(
         "<b>Выберите противника для дуэли:</b>\n\n"
-        f"Ваш баланс: {player.money} монет\n"
-        f"Ваше HP: {player.hp}\n"
-        f"Ваш урон: {player.damage}\n\n"
+        f"Ваш баланс: {} монет\n"
+        f"Ваше HP: {}\n"
+        f"Ваш урон: {}\n\n"
         f"Бой будет длиться до 3 раундов или до смерти!",
-        reply_markup=keyboard
+        reply_markup=?? кнопки
     )
 
 
@@ -384,44 +384,44 @@ async def cmd_duel(message: types.Message):
 async def cmd_duel_select(callback: types.CallbackQuery):
     data = callback.data.split('_')
     
-    if len(data) < 3:
-        await callback.answer("Ошибка!")
+    if len(data) <???
+        await callback.answer("???")
         return
     
     try:
-        target_id = int(data[2])
+        target_id = int(???)
     except ValueError:
-        await callback.answer("Ошибка!")
+        await callback.answer("???")
         return
     
-    player = api.get_player(callback.message.chat.id, callback.from_user.id)
-    if not player:
-        await callback.answer("Сначала зарегистрируйтесь!")
+    player = api.get_player(callback.message.chat.id, callback.from_user.id)#Получи данные игрока из базы по chat_id и user_id, которые взяты из callback-запроса".
+    if нет игрока
+        await callback.answer("???")
         return
     
-    if player.hp <= 0:
-        await callback.answer("Вы мертвы! Восстановите HP через зелья!")
+    if player.hp <= 
+        await callback.answer("???")
         return
     
-    all_players = api.get_all_players()
-    target = next((p for p in all_players if p.user_id == target_id), None)
+    all_players = api.get_all_players()#Получи список всех зарегистрированных игроков из базы данных
+    target = next((p for p in all_players if ???), если не нашли)#Пройти по всем игрокам, найти первого, у кого user_id равен target_id. Если такого игрока нет — вернуть None
     
     if not target:
-        await callback.answer("Игрок не найден!")
+        await callback.answer("???")
         return
     
-    if target.hp <= 0:
-        await callback.answer("Этот игрок мёртв и не может сражаться!")
+    if здоровье
+        await callback.answer("???")
         return
     
-    if target_id == callback.from_user.id:
-        await callback.answer("Нельзя вызвать самого себя!")
+    if id одинаковое
+        await callback.answer("???")
         return
     
     if callback.message.chat.id in active_duels:
         for duel in active_duels[callback.message.chat.id]:
-            if duel['player1'] == target_id or duel['player2'] == target_id:
-                await callback.answer("Этот игрок уже участвует в дуэли!")
+            if duel['player1'] == target_id или ??
+                await callback.answer("???")
                 return
     
     if callback.message.chat.id not in active_duels:
@@ -429,31 +429,31 @@ async def cmd_duel_select(callback: types.CallbackQuery):
     
     active_duels[callback.message.chat.id].append({
         'player1': callback.from_user.id,
-        'player2': target_id,
-        'status': 'waiting',
+        'player2': ???
+        'status': 'waiting',#ожидание
         'challenger_chat_id': callback.message.chat.id,
-        'target_chat_id': target.chat_id
+        'target_chat_id':???
     })
     
-    keyboard = InlineKeyboardMarkup(
+    keyboard = создание клавиатуры
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="Принять дуэль",
-                    callback_data=f"accept_duel_{callback.from_user.id}_{target_id}"
+                    text="???",
+                    callback_data=f"accept_duel_{callback.from_user.id}_{target_id}"#данные при нажатие на кнопку
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="Отказаться",
-                    callback_data=f"refuse_duel_{callback.from_user.id}_{target_id}"
+                    text="???",
+                    callback_data=f"refuse_duel_???"
                 )
             ]
         ]
     )
     
     await callback.message.edit_text(
-        f"<b>Вы вызвали {target.name} на дуэль!</b>\n\n"
+        f"<b>Вы вызвали {???} на дуэль!</b>\n\n"
         f"Ожидайте ответа...\n"
     )
     
@@ -462,27 +462,27 @@ async def cmd_duel_select(callback: types.CallbackQuery):
             chat_id=target.chat_id,
             text=(
                 f"<b>ВЫЗОВ НА ДУЭЛЬ!</b>\n\n"
-                f"<b>{player.name}</b> вызывает вас на дуэль!\n\n"
+                f"<b>{???}</b> вызывает вас на дуэль!\n\n"
                 f"<b>Статистика вызывающего:</b>\n"
-                f"   HP: {player.hp}\n"
-                f"   Урон: {player.damage}\n"
+                f"   HP: {???}\n"
+                f"   Урон: {???}\n"
                 f"   Удача: {int(player.luck * 100)}%\n\n"
                 f"<b>Ваша статистика:</b>\n"
-                f"   HP: {target.hp}\n"
-                f"   Урон: {target.damage}\n"
+                f"   HP: {???}\n"
+                f"   Урон: {???}\n"
                 f"   Удача: {int(target.luck * 100)}%\n\n"
             ),
-            reply_markup=keyboard
+            reply_markup=keyboard#кнопки принять отказаться
         )
     except Exception as e:
         print(f"Ошибка отправки сообщения противнику: {e}")
         await callback.message.edit_text(
-            f"Не удалось отправить вызов {target.name}!\n"
+            f"Не удалось отправить вызов {???}!\n"
             f"Убедитесь, что бот может писать ему в личные сообщения."
         )
         return
     
-    await callback.answer(f"Вызов отправлен {target.name}!")
+    await callback.answer(f"Вызов отправлен {???}!")
 
 
 @router.callback_query(F.data.startswith("refuse_duel_"))
