@@ -28,6 +28,18 @@ async def cmd_raid(message: types.Message):
 
 @router.message(Command("join"))
 async def cmd_join_by_name(message: types.Message):
+            text += f"Создатель: {creator_name}\n"
+            text += f"{status}\n"
+            text += f"HP: {raid.get('boss_current_hp', boss.hp)}\n"
+            
+            if not is_participant and raid['status'] == 'recruiting':
+                text += f"/join {creator_name} - присоединиться\n"
+            elif is_participant:
+                text += f"Вы уже в этом рейде!\n"
+            else:
+                text += f"Рейд уже начался!\n"
+            
+            text += "\n"
     
 
 async def start_raid(message: types.Message, boss_id: int):
