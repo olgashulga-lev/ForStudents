@@ -11,8 +11,8 @@ router = Router()
 active_duels = {} #Словарь для хранения активных дуэлей. Ключ — chat_id, значение — список дуэлей в этом чате
 
 async def perform_duel(player1, player2, challenger_id, target_id, callback):
-    api.clear_expired_effects(callback.message.chat.id, player1.user_id) #Очистка эффектов у игрока 1
-    api.clear_expired_effects(callback.message.chat.id, player2.user_id) #очистка у 2 игрока
+    api.clear_expired_effect(callback.message.chat.id, player1.user_id) #Очистка эффектов у игрока 1
+    api.clear_expired_effect(callback.message.chat.id, player2.user_id) #очистка у 2 игрока
     
     effects1 = api.get_active_effects(callback.message.chat.id, player1.user_id)#Получение активных эффектов игрока 1
     effects2 = api.get_active_effects(callback.message.chat.id, player2.user_id)# у второго
@@ -59,70 +59,74 @@ async def perform_duel(player1, player2, challenger_id, target_id, callback):
     text += "═" * 30 + "\n\n"
     
     round_num = 1
-    
-    while player1_hp > 0 and player2_hp > 0: # пока раунд не макс. и здоровье обоих игроков больше 0
+    damage1 = player1_damage
+    damage2 = player2_damage
+    while player1_hp > 0 and player2_hp > 0 and round_num < 10: # пока раунд не макс. и здоровье обоих игроков больше 0
+        damage1 = player1_damage
+        damage2 = player2_damage                   
         text += f"<b>РАУНД {round_num}</b>\n"
         creet1 = random.randint(1, 100)
         if creet1 <= player1_luck:
-           player1_damage = int(player1_damage * 1.3)
-           text += f"{player1.name} повезло! Критический удар!\n"            
+           damage1 = int(damage1 * 1.5)
+           text += f"{player1.name} повезло! Критический удар!\n"   
+        else:
+            player1_damage += random.randint(0, 3)         
         creet2 = random.randint(1, 100)
         if creet2 <= player2_luck:
-           player2_damage = int(player2_damage * 1.3)
-           text += f"{player2.name} повезло! Критический удар!\n"            
+           damage2 = int(damage2 * 1.5)
+           text += f"{player2.name} повезло! Критический удар!\n" 
+        else:
+            damage2 += random.randint(0, 3)
+            
         
 
-        player2_hp -= player1_damage
+        player2_hp -= damage1
         if player2_hp <= 0:
             player2_hp = 0
-            text += f"{player1.name} нанёс {player1_damage} урона → {player2_hp} HP\n"
+            text += f"{player1.name} нанёс {damage1} урона → {player2_hp} HP\n"
             text += f"{player2.name} повержен!\n"
+            win_money = int(player2_money * 0.15)
+            player1_money += win_money
+            player2_money -= win_money
+            winner = player1
+            loser = player2
+
+            player2_hp = 100
+            player1_hp += 20 
+
+            leveledW = player1.add_exp(exp_for_winner)#добавляет опыт и проверяет повышение уровня
+            leveledL = player2.add_exp(exp_for_loser)
+
             break
         else:    
-            text += f"{player1.name} нанёс {player1_damage} урона → {player2_hp} HP\n"
+            text += f"{player1.name} нанёс {damage1} урона → {player2_hp} HP\n"
         player1_hp -= player2_damage
         if player1_hp <= 0:
             player1_hp = 0
-            text += f"{player2.name} нанёс {player2_damage} урона → {player1_hp} HP\n"
+            text += f"{player2.name} нанёс {damage2} урона → {player1_hp} HP\n"
             text += f"{player1.name} повержен!\n"
+            win_money = int(player1_money * 0.15)
+            player2_money += win_money
+            player1_money -= win_money
+            winner = player2
+            loser = player1
+
+            player1_hp = 100
+            player2_hp += 20 
+            #написать про здоровье 2
+
+            leveledL = player1.add_exp(exp_for_loser)#добавляет опыт и проверяет повышение уровня
+            leveledW = player2.add_exp(exp_for_winner)
             break
         else:    
-            text += f"{player2.name} нанёс {player2_damage} урона → {player1_hp} HP\n"
+            text += f"{player2.name} нанёс {damage2} урона → {player1_hp} HP\n"
 
             text += "═" * 30 + "\n\n"
+        round_num += 1
     
     exp_for_winner = random.randint(15, 20)#опыт для победителя
     exp_for_loser = random.randint(5, 10)#опыт для проигравшего
-    
-    if player2_hp <= 0:
-        win_money = int(player2_money * 0.15)
-        player1_money += win_money
-        player2_money -= win_money
-        winner = player1
-        loser = player2
-
-        player2_hp = 100
-        player1_hp += 20 
-
-        leveledW = player1.add_exp(exp_for_winner)#добавляет опыт и проверяет повышение уровня
-        leveledL = player2.add_exp(exp_for_loser)
-
-    
-    else:
-
-        win_money = int(player1_money * 0.15)
-        player2_money += win_money
-        player1_money -= win_money
-        winner = player2
-        loser = player1
-
-        player1_hp = 100
-        player2_hp += 20 
-        #написать про здоровье 2
-
-        leveledL = player1.add_exp(exp_for_loser)#добавляет опыт и проверяет повышение уровня
-        leveledW = player2.add_exp(exp_for_winner)
-        
+       
     api.update_player(player1)
     api.update_player(player2)
 
@@ -231,8 +235,8 @@ async def cmd_duel_select(callback: types.CallbackQuery):
         await callback.answer("error")
         return
     
-    if player.hp > 0:
-        await callback.answer("alive")
+    if player.hp <= 0:
+        await callback.answer("dead")
         return
     
     if callback.from_user.id == target_id:
