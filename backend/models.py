@@ -724,3 +724,24 @@ async def cmd_achievement(message: types.Message):
         text += f"\n... и еще {len(achievements) - ???} достижений"
     
     await message.answer(text)
+
+@router.message(Command("deaths"))
+async def cmd_deaths(message: types.Message):
+    player = ? Функция — получает данные игрока
+    if нет игрока
+        await
+        return
+    
+    all_players = api.get_all_players()#Функция — получает всех игроков из базы
+    
+    # Сортируем по количеству смертей
+    sorted_players = sorted(all_players, key=lambda p: p.deaths, reverse=True)
+    
+    text = "<b>Рейтинг смертей:</b>\n\n"
+    
+    for i, p in enumerate(sorted_players[:10], 1):
+        medal = "" if i == 1 else "" if i == 2 else "" if i == 3 else f"{i}."
+        status = "" if p.hp <= 0 else ""
+        text += f"{medal} {status} {p.name} - {p.deaths} смертей (Ур.{p.level})\n"
+    
+    await message.answer(text)
