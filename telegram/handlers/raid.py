@@ -158,37 +158,119 @@ async def cmd_raid_status(message: types.Message):
 
 @router.message(Command("leave_raid"))
 async def cmd_leave_raid(message: types.Message):
-    
+    for raid_id, raid in active_raids.items():
+        if message.from_user.id in raid['players']:
+            if raid[''] != '':
+                
+            
+            
+            
 
 @router.callback_query(F.data.startswith("start_raid_battle_"))
 async def cmd_raid_battle(callback: types.CallbackQuery):
+    raid_id = callback.data.replace("start_raid_battle_", "")
     
-        achievement_config = {
-            1: {"name": "", "desc": ""},
-            2: {"name": "", "desc": ""},
-            3: {"name": "", "desc": ""}
-        }
-
+    
+    boss = next((b for b in api.get_bosses() if b.id == raid['boss_id']), None)
+    
+    
+    for user_id in raid['players']:
         
+    
+    
+    
+    boss_hp = battle_result['boss_hp']
+    
+    
+    
+    for i, name in enumerate(players_names):
+        
+    
+    
+    if boss_hp <= 0:
+        
+
+        for  in raid['']:
+            for p in all_players:
+                if  == :
+                    
+                    has_achievement = any(a.name == achievement_config[boss.id]['name'] for a in existing)
+                
+                    if not has_achievement and boss.id in achievement_config:
+                        result = api.give_achievement(
+                            chat_id=p.chat_id,
+                            user_id=user_id,
+                            name=achievement_config[boss.id]['name'],
+                            description=achievement_config[boss.id]['desc'],
+                            condition=f"Победа над боссом {boss.name}"
+                        )
+                        if result:
+                            achievement_messages.append(f"{p.name} получил достижение '{achievement_config[boss.id]['name']}'!")
+                    break
+    
+        
+        for  in raid['']:
+            for p in all_players:
+                if  == :
+                    player = 
+                    if player:
+                        
+    
+        if level_up_messages:
+            text += "\n\n" + "\n".join(level_up_messages)
+        
+        for  in raid['']:
+            
+        
+        
+        
+    else:
+        
+        
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="Начать бой снова",
+                        callback_data=f"start_raid_battle_{raid_id}"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="Отменить рейд",
+                        callback_data=f"cancel_raid_{raid_id}"
+                    )
+                ]
+            ]
+        )
+        
+        for  in raid['']:
+            
+        
+        await callback.message.edit_text(text, reply_markup=keyboard)
+    
+    
 
 @router.callback_query(F.data.startswith("cancel_raid_"))
 async def cmd_cancel_raid(callback: types.CallbackQuery):
-   
+    raid_id = callback.data.replace("cancel_raid_", "")
+    
+    
+    
+    
+    for  raid['']:
+        
+
 async def check_and_give_boss_achievements(boss_id, user_id, chat_id, bot):
     achievement_config = {
         1: {
-            'name': "",
-            'description': ""
+            
         },
         2: {
-            'name': "",
-            'description': ""
+            
         },
         3: {
-            'name': "",
-            'description': ""
+            
         }
     }
     
-    
-    await callback.message.edit_text("Рейд отменён")
