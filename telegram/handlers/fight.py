@@ -1,3 +1,4 @@
+# fight
 import random
 import asyncio
 from aiogram import Router, types, F
@@ -7,22 +8,21 @@ import api
 from .common_utils import get_player_or_none
 
 router = Router()
-active_duels = {}
+active_duels = {} #Словарь для хранения активных дуэлей. Ключ — chat_id, значение — список дуэлей в этом чате
 
 async def perform_duel(player1, player2, challenger_id, target_id, callback):
-    api.clear_expired_effect(callback.message.chat.id, player1.user_id)
-    api.clear_expired_effect(callback.message.chat.id, player2.user_id)
+    api.clear_expired_effects(callback.message.chat.id, player1.user_id) #Очистка эффектов у игрока 1
+    api.clear_expired_effects(callback.message.chat.id, player2.user_id) #очистка у 2 игрока
     
-    effects1 = api.get_active_effect(callback.message.chat.id, player1.user_id)
-    effects2 = api.get_active_effect(callback.message.chat.id, player2.user_id)
+    effects1 = api.get_active_effects(callback.message.chat.id, player1.user_id)#Получение активных эффектов игрока 1
+    effects2 = api.get_active_effects(callback.message.chat.id, player2.user_id)# у второго
     
     player1_damage = player1.damage
     player1_luck = player1.luck
     player1_hp = player1.hp
+    player1_money = player1.money
+    # для хранения урона, удачи и здоровья игроков 1 и 2
     
-    player2_damage = player2.damage
-    player2_luck = player2.luck
-    player2_hp = player2.hp
     
     for e in effects1:
         if e.get('effect_type') == 'damage_bonus':
@@ -32,6 +32,14 @@ async def perform_duel(player1, player2, challenger_id, target_id, callback):
         elif e.get('effect_type') == 'hp_bonus':
             player1_hp += e.get('value', 0)
     
+    # сделать цикл для эффектов 2 игрока
+    player2_damage = player2.damage
+    player2_luck = player2.luck
+    player2_hp = player2.hp
+    player2_money = player2.money
+    # для хранения урона, удачи и здоровья игроков 1 и 2
+    
+    
     for e in effects2:
         if e.get('effect_type') == 'damage_bonus':
             player2_damage += e.get('value', 0)
@@ -40,8 +48,8 @@ async def perform_duel(player1, player2, challenger_id, target_id, callback):
         elif e.get('effect_type') == 'hp_bonus':
             player2_hp += e.get('value', 0)
     
-    # Сохраняем начальное HP для восстановления после боя
-    initial_hp1 = player1_hp
+    initial_hp1 = player1_hp #начальное здоровье игрока 1
+    #написать для 2 игрока
     initial_hp2 = player2_hp
     
     text = f"<b>ДУЭЛЬ НАЧАЛАСЬ!</b>\n\n"
@@ -52,156 +60,126 @@ async def perform_duel(player1, player2, challenger_id, target_id, callback):
     
     round_num = 1
     
-    while player1_hp > 0 and player2_hp > 0:
+    while player1_hp > 0 and player2_hp > 0: # пока раунд не макс. и здоровье обоих игроков больше 0
         text += f"<b>РАУНД {round_num}</b>\n"
+        creet1 = random.randint(1, 100)
+        if creet1 <= player1_luck:
+           player1_damage = int(player1_damage * 1.3)
+           text += f"{player1.name} повезло! Критический удар!\n"            
+        creet2 = random.randint(1, 100)
+        if creet2 <= player2_luck:
+           player2_damage = int(player2_damage * 1.3)
+           text += f"{player2.name} повезло! Критический удар!\n"            
         
-        # Базовый урон
-        base_damage1 = random.randint(5, 15) + player1_damage // 3
-        base_damage2 = random.randint(5, 15) + player2_damage // 3
-        
-        # Проверка критического удара
-        if random.random() < player1_luck:
-            base_damage1 = int(base_damage1 * 1.5)
-            text += f"{player1.name} повезло! Критический удар!\n"
-        
-        if random.random() < player2_luck:
-            base_damage2 = int(base_damage2 * 1.5)
-            text += f"{player2.name} повезло! Критический удар!\n"
-        
-        # Определяем инициативу (кто атакует первым)
-        initiative1 = random.randint(1, 20) + player1_luck * 10
-        initiative2 = random.randint(1, 20) + player2_luck * 10
-        
-        if initiative1 >= initiative2:
-            # Игрок 1 атакует первым
-            player2_hp -= base_damage1
-            if player2_hp <= 0:
-                player2_hp = 0
-                text += f"{player1.name} нанёс {base_damage1} урона → {player2_hp} HP\n"
-                text += f"{player2.name} повержен!\n"
-                break
-            else:
-                text += f"{player1.name} нанёс {base_damage1} урона → {player2_hp} HP\n"
-            
-            # Игрок 2 атакует в ответ
-            player1_hp -= base_damage2
-            if player1_hp <= 0:
-                player1_hp = 0
-                text += f"{player2.name} нанёс {base_damage2} урона → {player1_hp} HP\n"
-                text += f"{player1.name} повержен!\n"
-                break
-            else:
-                text += f"{player2.name} нанёс {base_damage2} урона → {player1_hp} HP\n"
-        else:
-            # Игрок 2 атакует первым
-            player1_hp -= base_damage2
-            if player1_hp <= 0:
-                player1_hp = 0
-                text += f"{player2.name} нанёс {base_damage2} урона → {player1_hp} HP\n"
-                text += f"{player1.name} повержен!\n"
-                break
-            else:
-                text += f"{player2.name} нанёс {base_damage2} урона → {player1_hp} HP\n"
-            
-            # Игрок 1 атакует в ответ
-            player2_hp -= base_damage1
-            if player2_hp <= 0:
-                player2_hp = 0
-                text += f"{player1.name} нанёс {base_damage1} урона → {player2_hp} HP\n"
-                text += f"{player2.name} повержен!\n"
-                break
-            else:
-                text += f"{player1.name} нанёс {base_damage1} урона → {player2_hp} HP\n"
-        
-        text += "\n"
-        round_num += 1
+
+        player2_hp -= player1_damage
+        if player2_hp <= 0:
+            player2_hp = 0
+            text += f"{player1.name} нанёс {player1_damage} урона → {player2_hp} HP\n"
+            text += f"{player2.name} повержен!\n"
+            break
+        else:    
+            text += f"{player1.name} нанёс {player1_damage} урона → {player2_hp} HP\n"
+        player1_hp -= player2_damage
+        if player1_hp <= 0:
+            player1_hp = 0
+            text += f"{player2.name} нанёс {player2_damage} урона → {player1_hp} HP\n"
+            text += f"{player1.name} повержен!\n"
+            break
+        else:    
+            text += f"{player2.name} нанёс {player2_damage} урона → {player1_hp} HP\n"
+
+            text += "═" * 30 + "\n\n"
     
-    text += "═" * 30 + "\n\n"
+    exp_for_winner = random.randint(15, 20)#опыт для победителя
+    exp_for_loser = random.randint(5, 10)#опыт для проигравшего
     
-    exp_for_winner = random.randint(15, 20)
-    exp_for_loser = random.randint(5, 10)
-    
-    # Определяем победителя
     if player2_hp <= 0:
-        win_money = int(player2.money * 0.15)
-        player1.money += win_money
-        player2.money -= win_money
+        win_money = int(player2_money * 0.15)
+        player1_money += win_money
+        player2_money -= win_money
         winner = player1
         loser = player2
-        player2.hp = 100  # Воскрешаем проигравшего
-        
-        leveledW = player1.add_exp(exp_for_winner)
+
+        player2_hp = 100
+        player1_hp += 20 
+
+        leveledW = player1.add_exp(exp_for_winner)#добавляет опыт и проверяет повышение уровня
         leveledL = player2.add_exp(exp_for_loser)
+
+    
     else:
-        win_money = int(player1.money * 0.15)
-        player2.money += win_money
-        player1.money -= win_money
+
+        win_money = int(player1_money * 0.15)
+        player2_money += win_money
+        player1_money -= win_money
         winner = player2
         loser = player1
-        player1.hp = 100  # Воскрешаем проигравшего
-        
+
+        player1_hp = 100
+        player2_hp += 20 
+        #написать про здоровье 2
+
+        leveledL = player1.add_exp(exp_for_loser)#добавляет опыт и проверяет повышение уровня
         leveledW = player2.add_exp(exp_for_winner)
-        leveledL = player1.add_exp(exp_for_loser)
-    
-    # Восстанавливаем HP до начального (но не больше 100)
-    player1.hp = min(100, initial_hp1)
-    player2.hp = min(100, initial_hp2)
-    
+        
     api.update_player(player1)
     api.update_player(player2)
-    
+
+        
     text += f"<b>{winner.name} ПОБЕДИЛ!</b>\n"
     text += f"+{win_money} монет!\n"
     text += f"+{exp_for_winner} опыта"
     if leveledW:
-        text += f"\n{winner.name} ПОВЫСИЛ УРОВЕНЬ ДО {winner.level}!"
+        text += f"{winner.name} ПОВЫСИЛ УРОВЕНЬ ДО {winner.level}!"
     text += f"\nОсталось HP: {winner.hp}\n"
     
     text += f"\n{loser.name} проиграл\n"
     text += f"+{exp_for_loser} опыта (за участие)"
     if leveledL:
-        text += f"\n{loser.name} ПОВЫСИЛ УРОВЕНЬ ДО {loser.level}!"
+        text += f"{loser.name} ПОВЫСИЛ УРОВЕНЬ ДО {loser.level}!"
     
     if player2_hp <= 0:
         text += f"\n{loser.name} мёртв!"
-    
+        
     return text
+
+
+
 
 @router.message(Command("fight"))
 async def cmd_duel(message: types.Message):
     player = get_player_or_none(message)
     if not player:
-        await message.answer("Сначала зарегистрируйтесь: /registration")
+        await message.answer("игрока нат в бд")
         return
     
     all_players = api.get_all_players()
     available_players = []
-    
-    for p in all_players:  # Исправлено: было for x in available_players
-        if p.user_id == message.from_user.id:
+    for x in all_players:
+        if x.user_id == message.from_user.id:#ID пользователя, который написал команду /fight
             continue
         
         in_duel = False
-        if message.chat.id in active_duels:  # Исправлено: проверка наличия ключа
-            for duel in active_duels[message.chat.id]:
-                if p.user_id == duel['player1'] or p.user_id == duel['player2']:
+        if message.chat.id in active_duels:
+            for duel in active_duels [message.chat.id]:
+                if x.user_id == duel['player1'] or x.user_id == duel['player2']:
                     in_duel = True
                     break
         
         if not in_duel:
-            available_players.append(p)
+            available_players.append(x)
     
     if not available_players:
-        await message.answer("Нет доступных игроков для дуэли!")
+        await message.answer("нет доступных игроков")
         return
     
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[])
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[])#Это клавиатура, которая появляется под сообщением в виде кнопок. При нажатии на кнопку отправляется callback-запрос.
     
-    # Исправлено: срез списка
-    for p in available_players[:5]:
+    for p in available_players[0:5]:
         keyboard.inline_keyboard.append([
             InlineKeyboardButton(
-                text=f"{p.name} (Ур. {p.level} | {p.hp} HP)",  # Исправлено: p.name
+                text=f"{p.name} (Ур. {p.level} | {p.hp} HP)",
                 callback_data=f"duel_select_{p.user_id}"
             )
         ])
@@ -219,51 +197,52 @@ async def cmd_duel(message: types.Message):
         f"Ваше HP: {player.hp}\n"
         f"Ваш урон: {player.damage}\n\n"
         f"Бой будет длиться до смерти!",
-        reply_markup=keyboard
+        reply_markup= keyboard
     )
+
 
 @router.callback_query(F.data.startswith("duel_select_"))
 async def cmd_duel_select(callback: types.CallbackQuery):
     data = callback.data.split('_')
     
     if len(data) < 3:
-        await callback.answer("Ошибка!")
+        await callback.answer("error")
         return
     
     try:
         target_id = int(data[2])
     except ValueError:
-        await callback.answer("Ошибка!")
+        await callback.answer("error")
         return
     
-    player = api.get_player(callback.message.chat.id, callback.from_user.id)
+    player = api.get_player(callback.message.chat.id, callback.from_user.id)#Получи данные игрока из базы по chat_id и user_id, которые взяты из callback-запроса".
     if not player:
-        await callback.answer("Сначала зарегистрируйтесь!")
+        await callback.answer("no player")
         return
     
     if player.hp <= 0:
-        await callback.answer("Вы мертвы! Восстановите HP!")
+        await callback.answer("dead")
         return
     
-    all_players = api.get_all_players()
-    target = next((p for p in all_players if p.user_id == target_id), None)
+    all_players = api.get_all_players()#Получи список всех зарегистрированных игроков из базы данных
+    target = next((p for p in all_players if p.user_id == target_id), None)#Пройти по всем игрокам, найти первого, у кого user_id равен target_id. Если такого игрока нет — вернуть None
     
     if not target:
-        await callback.answer("Игрок не найден!")
+        await callback.answer("error")
         return
     
-    if target.hp <= 0:  # Исправлено: проверяем HP противника
-        await callback.answer("Этот игрок мёртв!")
+    if player.hp > 0:
+        await callback.answer("alive")
         return
     
     if callback.from_user.id == target_id:
-        await callback.answer("Нельзя вызвать самого себя!")
+        await callback.answer("error")
         return
     
     if callback.message.chat.id in active_duels:
         for duel in active_duels[callback.message.chat.id]:
             if duel['player1'] == target_id or duel['player2'] == target_id:
-                await callback.answer("Игрок уже участвует в дуэли!")
+                await callback.answer("игрок уже учавствует в дуэли")
                 return
     
     if callback.message.chat.id not in active_duels:
@@ -272,9 +251,9 @@ async def cmd_duel_select(callback: types.CallbackQuery):
     active_duels[callback.message.chat.id].append({
         'player1': callback.from_user.id,
         'player2': target_id,
-        'status': 'waiting',
+        'status': 'waiting',#ожидание
         'challenger_chat_id': callback.message.chat.id,
-        'target_chat_id': target.chat_id
+        'target_chat_id':target.chat_id
     })
     
     keyboard = InlineKeyboardMarkup(
@@ -282,7 +261,7 @@ async def cmd_duel_select(callback: types.CallbackQuery):
             [
                 InlineKeyboardButton(
                     text="Принять",
-                    callback_data=f"accept_duel_{callback.from_user.id}_{target_id}"
+                    callback_data=f"accept_duel_{callback.from_user.id}_{target_id}"#данные при нажатие на кнопку
                 )
             ],
             [
@@ -314,7 +293,7 @@ async def cmd_duel_select(callback: types.CallbackQuery):
                 f"   Урон: {target.damage}\n"
                 f"   Удача: {int(target.luck * 100)}%\n\n"
             ),
-            reply_markup=keyboard
+            reply_markup=keyboard#кнопки принять отказаться
         )
     except Exception as e:
         print(f"Ошибка отправки сообщения противнику: {e}")
@@ -326,57 +305,59 @@ async def cmd_duel_select(callback: types.CallbackQuery):
     
     await callback.answer(f"Вызов отправлен {target.name}!")
 
+
 @router.callback_query(F.data.startswith("refuse_duel_"))
-async def cmd_duel_refuse(callback: types.CallbackQuery):
+async def cmd_duel_refuse(callback: types.CallbackQuery):#команда отказа от дуэли
     data = callback.data.split('_')
     if len(data) < 4:
-        await callback.answer("Ошибка!")
+        await callback.answer("error")
         return
     
     try:
         challenger_id = int(data[2])
         target_id = int(data[3])
     except ValueError:
-        await callback.answer("Ошибка!")
+        await callback.answer("error")
         return
     
     if callback.from_user.id != target_id:
-        await callback.answer("Это не ваш вызов!")
+        await callback.answer("error")
         return
     
-    if callback.message.chat.id in active_duels:
-        for duel in active_duels[callback.message.chat.id][:]:
+    if callback.message.chat.id in active_duels:#Если в этом чате есть активные дуэли
+        for duel in active_duels[callback.message.chat.id][:]:#Копия списка дуэлей в чате
             if duel['player1'] == challenger_id and duel['player2'] == target_id:
-                active_duels[callback.message.chat.id].remove(duel)
+                active_duels[callback.message.chat.id].remove(duel)#Удаляем эту дуэль из списка активных
                 break
     
     await callback.message.edit_text(
         f"{callback.from_user.first_name} отказался от дуэли"
     )
-    await callback.answer("Вы отказались от дуэли")
+    await callback.answer("вы отказались от дуэли")
+
 
 @router.callback_query(F.data == "duel_cancel")
 async def cmd_duel_cancel(callback: types.CallbackQuery):
     await callback.message.delete()
-    await callback.answer("Отменено")
+    await callback.answer("отменено")
 
 @router.callback_query(F.data.startswith("accept_duel_"))
-async def cmd_duel_accept(callback: types.CallbackQuery):
+async def cmd_duel_accept(callback: types.CallbackQuery):#команда принятия дуэли
     data = callback.data.split('_')
     
     if len(data) < 4:
-        await callback.answer("Ошибка!")
+        await callback.answer("error")
         return
     
     try:
         challenger_id = int(data[2])
         target_id = int(data[3])
     except ValueError:
-        await callback.answer("Ошибка!")
+        await callback.answer("error")
         return
     
     if callback.from_user.id != target_id:
-        await callback.answer("Это не ваш вызов!")
+        await callback.answer("это не ваш вызов")
         return
     
     duel = None
@@ -391,31 +372,31 @@ async def cmd_duel_accept(callback: types.CallbackQuery):
             break
     
     if not duel:
-        await callback.answer("Дуэль уже завершена!")
+        await callback.answer("дуэль завершена")
         return
     
-    player1 = api.get_player(duel['challenger_chat_id'], challenger_id)
+    player1 = api.get_player(duel['challenger_chat_id'], challenger_id)#Получи данные вызывающего игрока по его chat_id и user_id
     if not player1:
-        all_players = api.get_all_players()
-        player1 = next((p for p in all_players if p.user_id == challenger_id), None)
+        all_players = api.get_all_players()#Получаем всех игроков из базы
+        player1 = next((p for p in all_players if p.user_id == challenger_id), None)#Если не удалось получить игрока по chat_id, попробуй найти его по user_id среди всех игроков
     
-    player2 = api.get_player(callback.message.chat.id, target_id)  # Исправлено: убрал duel.
+    player2 = api.get_player(callback.message.chat.id, target_id)
     if not player2:
         all_players = api.get_all_players()
         player2 = next((p for p in all_players if p.user_id == target_id), None)
-    
+
     if not player1 or not player2:
-        await callback.answer("Игроки не найдены!")
+        await callback.answer("игроки не найдены")
         return
     
     if player1.hp <= 0:
-        await callback.answer("Вызывающий мёртв!")
+        await callback.answer("этот игрок мертв")
         active_duels[duel_key].remove(duel)
-        await callback.message.edit_text("Дуэль отменена, вызывающий мёртв!")
+        await callback.message.edit_text("дуэль отменена, вызывающийся Игорёк мертв")
         return
     
     if player2.hp <= 0:
-        await callback.answer("Вы мертвы! Восстановите HP!")
+        await callback.answer("ты мертв")
         return
     
     duel['status'] = 'fighting'
@@ -429,7 +410,7 @@ async def cmd_duel_accept(callback: types.CallbackQuery):
     
     try:
         await callback.bot.send_message(
-            chat_id=duel['challenger_chat_id'],
+            chat_id=duel['challenger_chat_id'],#Отправь сообщение в чат вызывающего игрока
             text=(
                 f"<b>{player2.name} ПРИНЯЛ ДУЭЛЬ!</b>\n\n"
                 f"Бой начинается!"
@@ -438,8 +419,8 @@ async def cmd_duel_accept(callback: types.CallbackQuery):
     except Exception as e:
         print(f"Ошибка уведомления вызывающего: {e}")
     
-    await asyncio.sleep(3)
-    text = await perform_duel(player1, player2, challenger_id, target_id, callback)
+    await asyncio.sleep(3)#Функция — приостанавливает выполнение на 2 секунды
+    text = await perform_duel(player1, player2, challenger_id, target_id, callback)#Выполни функцию perform_duel(), которая рассчитывает все раунды боя, и сохрани результат в переменную text
     active_duels[duel_key].remove(duel)
     
     try:
@@ -451,12 +432,13 @@ async def cmd_duel_accept(callback: types.CallbackQuery):
         print(f"Ошибка отправки результата вызывающему: {e}")
     
     await callback.message.edit_text(text)
-    await callback.answer("Дуэль завершена!")
+    await callback.answer("все закончилось")
+
 
 @router.message(Command("fight_cancel"))
-async def cmd_duel_cancel_all(message: types.Message):
+async def cmd_duel_cancel_all(message: types.Message):#команда отмены всех дуэлей
     if message.chat.id not in active_duels:
-        await message.answer("Нет активных дуэлей!")
+        await message.answer('нет активных дуэлей')
         return
     
     removed = False
@@ -466,6 +448,6 @@ async def cmd_duel_cancel_all(message: types.Message):
             removed = True
     
     if removed:
-        await message.answer("Дуэль отменена!")
+        await message.answer('дуэль отменена')
     else:
-        await message.answer("Вы не участвуете в дуэли!")
+        await message.answer('нет дуэли')
